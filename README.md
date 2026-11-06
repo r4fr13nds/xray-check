@@ -22,22 +22,22 @@ It does **not** connect to or test proxy servers. It only inspects subscription 
 
 Download the latest executable for your platform from the project's GitHub Releases:
 
-- macOS: `xray-check`
-- Windows: `xray-check.exe`
+- macOS: `xray-check-macos`
+- Windows: `xray-check-win.exe`
 
 The executable bundles Python and project dependencies; no separate Python installation or `pip install` is needed. On macOS, if needed, make the downloaded file executable:
 
 ```sh
-chmod +x ./xray-check
+chmod +x ./xray-check-macos
 ```
 
-Run the downloaded executable directly:
+Run the macOS executable:
 
 ```sh
-./xray-check
+./xray-check-macos
 ```
 
-In PowerShell, run `.\xray-check.exe`. macOS may warn that the app is from an unidentified developer because the executable is not code-signed. The macOS build uses the architecture of the GitHub-hosted runner.
+In PowerShell, run `.\xray-check-win.exe`. macOS may warn that the app is from an unidentified developer because the executable is not code-signed. The macOS build uses the architecture of the GitHub-hosted runner.
 
 ### Install from source
 

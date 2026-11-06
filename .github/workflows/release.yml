@@ -20,7 +20,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]
+        include:
+          - os: macos-latest
+            asset-name: xray-check-macos
+          - os: windows-latest
+            asset-name: xray-check-win
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -35,15 +39,15 @@ jobs:
         run: uv sync --locked --no-dev --group build
 
       - name: Build executable
-        run: uv run --no-sync python -m PyInstaller --clean --noconfirm --onefile --console --name xray-check xray_sub_checker/cli.py
+        run: uv run --no-sync python -m PyInstaller --clean --noconfirm --onefile --console --name "${{ matrix.asset-name }}" xray_sub_checker/cli.py
 
       - name: Smoke-test executable (macOS)
         if: runner.os == 'macOS'
-        run: ./dist/xray-check --help
+        run: ./dist/xray-check-macos --help
 
       - name: Smoke-test executable (Windows)
         if: runner.os == 'Windows'
-        run: .\dist\xray-check.exe --help
+        run: .\dist\xray-check-win.exe --help
 
       - name: Upload executable
         uses: actions/upload-artifact@v4
@@ -72,7 +76,34 @@ jobs:
         with:
           tag_name: ${{ github.ref_name }}
           name: xray-check ${{ github.ref_name }}
-          generate_release_notes: true
+          body: |
+            ## xray-check ${{ github.ref_name }}
+
+            Download the standalone executable for your operating system:
+
+            | File | Platform |
+            | --- | --- |
+            | `xray-check-macos` | macOS (GitHub runner architecture) |
+            | `xray-check-win.exe` | Windows |
+
+            `xray-check` reads Xray/V2Ray subscriptions and looks up the approximate IP, location, ISP, and ASN for each extracted server address. It does not connect to or test proxy servers.
+
+            ### macOS
+
+            Download `xray-check-macos`, then run:
+
+            ```sh
+            chmod +x ./xray-check-macos
+            ./xray-check-macos
+            ```
+
+            The executable is unsigned and may trigger a Gatekeeper warning.
+
+            ### Windows
+
+            Download and run `xray-check-win.exe`. Windows SmartScreen may show a warning because the executable is unsigned.
+
+            For options and examples, see the [README](https://github.com/${{ github.repository }}/blob/${{ github.ref_name }}/README.md).
           files: release-assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
