@@ -97,7 +97,13 @@ jobs:
             ./xray-check-macos
             ```
 
-            The executable is unsigned and may trigger a Gatekeeper warning.
+            The executable is unsigned, so macOS may say it cannot verify the app or check it for malicious software. Only if you downloaded it from this GitHub release and trust it, clear its quarantine attribute and try again:
+
+            ```sh
+            xattr -c ./xray-check-macos
+            ```
+
+            This removes extended attributes from that file and bypasses the quarantine check. Do not run this on software from an untrusted source.
 
             ### Windows
 

@@ -37,7 +37,13 @@ Run the macOS executable:
 ./xray-check-macos
 ```
 
-In PowerShell, run `.\xray-check-win.exe`. macOS may warn that the app is from an unidentified developer because the executable is not code-signed. The macOS build uses the architecture of the GitHub-hosted runner.
+In PowerShell, run `.\xray-check-win.exe`. The macOS executable is unsigned, so Gatekeeper may say it cannot verify the app or check it for malicious software. Only if you downloaded it from this project's GitHub Release and trust it, you can clear its quarantine attribute and try again:
+
+```sh
+xattr -c ./xray-check-macos
+```
+
+This removes extended attributes from that file and bypasses the quarantine check. Do not run this on software from an untrusted source. The macOS build uses the architecture of the GitHub-hosted runner.
 
 ### Install from source
 
