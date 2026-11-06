@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "xray-check"
+version = "1.0.0"
+description = "Check IP/domain info for Xray subscription configs via ip-api.com"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "xray-check"}]
+keywords = ["xray", "v2ray", "vmess", "vless", "trojan", "subscription", "ip-lookup"]
+classifiers = [
+    "Environment :: Console",
+    "Programming Language :: Python :: 3",
+    "Topic :: Utilities",
+]
+dependencies = [
+    "requests>=2.28",
+    "rich>=13.0",
+]
+
+[project.scripts]
+xray-check = "xray_sub_checker.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
