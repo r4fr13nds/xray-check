@@ -1,0 +1,78 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build executable (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          enable-cache: true
+
+      - name: Install locked build dependencies
+        run: uv sync --locked --no-dev --group build
+
+      - name: Build executable
+        run: uv run --no-sync python -m PyInstaller --clean --noconfirm --onefile --console --name xray-check xray_sub_checker/cli.py
+
+      - name: Smoke-test executable (macOS)
+        if: runner.os == 'macOS'
+        run: ./dist/xray-check --help
+
+      - name: Smoke-test executable (Windows)
+        if: runner.os == 'Windows'
+        run: .\dist\xray-check.exe --help
+
+      - name: Upload executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: xray-check-${{ runner.os }}
+          path: dist/xray-check*
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download executables
+        uses: actions/download-artifact@v4
+        with:
+          pattern: xray-check-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: xray-check ${{ github.ref_name }}
+          generate_release_notes: true
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

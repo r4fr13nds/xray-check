@@ -21,6 +21,9 @@ dependencies = [
     "rich>=13.0",
 ]
 
+[dependency-groups]
+build = ["pyinstaller>=6,<7"]
+
 [project.scripts]
 xray-check = "xray_sub_checker.cli:main"
 

@@ -4,17 +4,11 @@ on:
   push:
     branches:
       - "**"
-    tags:
-      - "v*"
   pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
   package-check:
@@ -29,91 +23,19 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python-version }}
-          cache: pip
-          cache-dependency-path: pyproject.toml
+          enable-cache: true
 
-      - name: Install package
-        run: python -m pip install .
-
-      - name: Check installed dependencies
-        run: python -m pip check
+      - name: Install locked dependencies
+        run: uv sync --locked --no-dev
 
       - name: Compile package
-        run: python -m compileall -q xray_sub_checker
+        run: uv run --no-sync python -m compileall -q xray_sub_checker
 
       - name: Smoke-test installed commands
         run: |
-          xray-check --help
-          python -m xray_sub_checker --help
-
-  build:
-    name: Build executable (${{ matrix.os }})
-    needs: package-check
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest]
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: |
-            pyproject.toml
-            requirements-build.txt
-
-      - name: Install package and PyInstaller
-        run: python -m pip install . -r requirements-build.txt
-
-      - name: Check installed dependencies
-        run: python -m pip check
-
-      - name: Build executable
-        run: python -m PyInstaller --clean --noconfirm --onefile --console --name xray-check xray_sub_checker/cli.py
-
-      - name: Smoke-test executable (macOS)
-        if: runner.os == 'macOS'
-        run: ./dist/xray-check --help
-
-      - name: Smoke-test executable (Windows)
-        if: runner.os == 'Windows'
-        run: .\dist\xray-check.exe --help
-
-      - name: Upload executable
-        uses: actions/upload-artifact@v4
-        with:
-          name: xray-check-${{ runner.os }}
-          path: dist/xray-check*
-          if-no-files-found: error
-          retention-days: 7
-
-  release:
-    name: Publish release assets
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: write
-    steps:
-      - name: Download executables
-        uses: actions/download-artifact@v4
-        with:
-          pattern: xray-check-*
-          path: release-assets
-          merge-multiple: true
-
-      - name: Create GitHub release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" release-assets/* --verify-tag --title "$GITHUB_REF_NAME" --generate-notes
+          uv run --no-sync xray-check --help
+          uv run --no-sync python -m xray_sub_checker --help
